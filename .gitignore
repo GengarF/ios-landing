@@ -1,0 +1,9 @@
+.build/
+.swiftpm/
+.DS_Store
+.vscode/
+*.swp
+*.tmp
+swiftly
+swiftly-x86_64.tar.gz
+LICENSE.txt
