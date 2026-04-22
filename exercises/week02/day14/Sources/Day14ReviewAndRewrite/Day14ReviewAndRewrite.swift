@@ -12,6 +12,8 @@ struct Day14ReviewAndRewrite {
         exercise4()
         exercise5()
         exercise6()
+        exercise7()
+        exercise8()
     }
 }
 
@@ -104,9 +106,9 @@ enum LoginResult {
 func handleLoginResult(_ result: LoginResult) {
     switch result {
     case .success(let username):
-        print("[exercise2] login success: \(username)")
+        print("[exercise2] status = success, username = \(username)")
     case .failure(let reason):
-        print("[exercise2] login failed: \(reason)")
+        print("[exercise2] status = failure, reason = \(reason)")
     }
 }
 
@@ -166,27 +168,27 @@ class Wallet {
     }
 }
 
-func addBonus(_ value: inout Int) {
+func addBonus(to value: inout Int) {
     value += 50
 }
 
 func exercise3() {
-    var board1 = ScoreBoard(score: 100)
-    var board2 = board1
-    board2.add(20)
+    let originalBoard = ScoreBoard(score: 100)
+    var copiedBoard = originalBoard
+    copiedBoard.add(20)
 
-    print("[exercise3] board1.score = \(board1.score)")
-    print("[exercise3] board2.score = \(board2.score)")
+    print("[exercise3] originalBoard.score = \(originalBoard.score)")
+    print("[exercise3] copiedBoard.score = \(copiedBoard.score)")
 
-    let wallet1 = Wallet(balance: 500)
-    let wallet2 = wallet1
-    wallet2.balance = 800
+    let sharedWallet = Wallet(balance: 500)
+    let sameWalletReference = sharedWallet
+    sameWalletReference.balance = 800
 
-    print("[exercise3] wallet1.balance = \(wallet1.balance)")
-    print("[exercise3] wallet2.balance = \(wallet2.balance)")
+    print("[exercise3] sharedWallet.balance = \(sharedWallet.balance)")
+    print("[exercise3] sameWalletReference.balance = \(sameWalletReference.balance)")
 
     var number = 10
-    addBonus(&number)
+    addBonus(to: &number)
     print("[exercise3] number = \(number)")
 }
 
@@ -292,8 +294,8 @@ struct Product {
         self.price = price
     }
 
-    init?(discountedName: String, price: Double) {
-        guard !discountedName.isEmpty else {
+    init?(validatedName: String, price: Double) {
+        guard !validatedName.isEmpty else {
             return nil
         }
 
@@ -301,19 +303,20 @@ struct Product {
             return nil
         }
 
-        self.name = discountedName.uppercased()
+        self.name = validatedName.uppercased()
         self.price = price
     }
 }
 
 func exercise5() {
     let product1 = Product(name: "keyboard", price: 199)
-    let product2 = Product(discountedName: "mouse", price: 99)
-    let product3 = Product(discountedName: "", price: -10)
+    let product2 = Product(validatedName: "mouse", price: 99)
+    let product3 = Product(validatedName: "", price: -10)
 
-    print("[exercise5] product1 = \(product1)")
-    print("[exercise5] product2 = \(String(describing: product2))")
-    print("[exercise5] product3 = \(String(describing: product3))")
+print("[exercise5] product1.name = \(product1.name), price = \(product1.price)")
+print("[exercise5] product2 = \(product2?.name ?? "nil"), price = \(product2?.price.description ?? "nil")")
+print("[exercise5] product3 = \(String(describing: product3))")
+
 }
 
 /*练习 6：错误处理 + 高阶函数复盘
@@ -366,10 +369,250 @@ func parseNumber(_ text: String) throws -> Int {
 func exercise6() {
     let texts = ["10", "", "abc", "30"]
 
+    for text in texts {
+        do {
+            let number = try parseNumber(text)
+            print("[exercise6] parsed \(text) -> \(number)")
+        } catch {
+            print("[exercise6] failed to parse \(text): \(error)")
+        }
+    }
+
     let validNumbers = texts.compactMap { try? parseNumber($0) }
     let sum = validNumbers.reduce(0, +)
 
     print("[exercise6] texts = \(texts)")
     print("[exercise6] validNumbers = \(validNumbers)")
     print("[exercise6] sum = \(sum)")
+}
+
+/*练习 7：Optional + enum + switch 进阶组合
+知识点提醒:
+Optional
+?.
+??
+enum associated value
+switch
+
+题目
+定义：
+struct Author
+struct Article
+enum PublishResult
+
+要求：
+Author 有属性：
+name: String?
+
+Article 有属性：
+title: String
+content: String
+author: Author?
+
+PublishResult 包含：
+success(summary: String)
+failure(reason: String)
+
+再写一个函数：
+func publishArticle(_ article: Article) -> PublishResult
+
+规则：
+如果 title 为空，返回 failure，并说明原因
+如果 content 少于 10 个字符，返回 failure，并说明原因
+如果 author 不存在，或者 author.name 是 nil，
+发布时作者名使用 "Anonymous"
+如果成功，返回 success，
+summary 至少包含 title 和 author name
+
+在 exercise7() 里至少测试 3 次：
+一个正常发布的文章
+一个 title 为空的文章
+一个没有 author 但仍然可以发布的文章
+
+提示：
+先区分“必须失败”的条件和“可以给默认值继续执行”的条件。
+author?.name ?? "Anonymous" 会很有用。
+最后可以用 switch 处理 PublishResult 并打印结果。
+*/
+struct Author { var name: String? }
+
+struct Article {
+    var title: String
+    var content: String
+    var author: Author?
+}
+
+enum PublishResult {
+    case success(summary: String)
+    case failure(reason: String)
+}
+
+func publishArticle(_ article: Article) -> PublishResult {
+    guard !article.title.isEmpty else {
+        return .failure(reason: "title is empty")
+    }
+
+    guard article.content.count >= 10 else {
+        return .failure(reason: "content is too short")
+    }
+
+    let authorName = article.author?.name ?? "Anonymous"
+    return .success(summary: "title: \(article.title), author: \(authorName)")
+}
+
+func exercise7() {
+    let result1 = publishArticle(
+        Article(
+            title: "The Great Wall",
+            content: "This is great.",
+            author: Author(name: "Gengar")
+        )
+    )
+
+    let result2 = publishArticle(
+        Article(
+            title: "",
+            content: "This is valid content.",
+            author: Author(name: "Jeff")
+        )
+    )
+
+    let result3 = publishArticle(
+        Article(
+            title: "Love is forever",
+            content: "Long enough text.",
+            author: nil
+        )
+    )
+
+    for result in [result1, result2, result3] {
+        switch result {
+        case .success(let summary):
+            print("[exercise7] success: \(summary)")
+        case .failure(let reason):
+            print("[exercise7] failure: \(reason)")
+        }
+    }
+}
+
+
+
+/*练习 8：protocol + init + error handling + 高阶函数进阶组合
+知识点提醒:
+protocol
+throws
+try?
+init? / init
+compactMap
+reduce
+
+题目
+定义：
+protocol Validatable
+struct OrderItem
+enum InputError: Error
+
+要求：
+Validatable 里有方法：
+func validate() throws
+
+OrderItem 有属性：
+name: String
+price: Double
+quantity: Int
+
+OrderItem 要遵守 Validatable
+
+InputError 至少包含：
+emptyName
+invalidPrice
+invalidQuantity
+
+你可以选择下面两种方案之一：
+给 OrderItem 写普通 init + validate()
+或者写可失败初始化器 init?
+或者写会抛错的初始化器 init(...)
+
+在 exercise8() 里准备一组原始输入数据，
+例如元组数组，或者字符串数组转换后的数据。
+原始数据里要同时包含合法项和非法项。
+
+要求：
+把原始输入转换成 OrderItem
+过滤掉不合法的项
+最后计算所有合法商品的总价
+总价规则：
+price * quantity
+
+最后打印：
+合法商品数组
+总价
+
+提示：
+这题重点是想清楚“初始化”和“校验”分别负责什么。
+如果你想保留更具体的错误原因，throws 往往比 init? 更合适。
+可以尝试配合 try?、compactMap、reduce 一起完成数据清洗和汇总。
+*/
+protocol Validatable {
+    func validate() throws
+}
+
+struct OrderItem: Validatable {
+    var name: String
+    var price: Double
+    var quantity: Int
+
+    init(name: String, price: Double, quantity: Int) {
+        self.name = name
+        self.price = price
+        self.quantity = quantity
+    }
+
+    func validate() throws {
+        guard !name.isEmpty else {
+            throw InputError.emptyName
+        }
+
+        guard price > 0 else {
+            throw InputError.invalidPrice
+        }
+
+        guard quantity > 0 else {
+            throw InputError.invalidQuantity
+        }
+    }
+}
+
+func makeOrderItem(name: String, price: Double, quantity: Int) throws -> OrderItem {
+    let item = OrderItem(name: name, price: price, quantity: quantity)
+    try item.validate()
+    return item
+}
+
+enum InputError: Error {
+    case emptyName
+    case invalidPrice
+    case invalidQuantity
+}
+
+
+func exercise8() {
+    let rawItems = [
+        ("Keyboard", 199.0, 2),
+        ("", 99.0, 1),
+        ("Mouse", -10.0, 3),
+        ("Monitor", 899.0, 0),
+        ("USB-C Cable", 59.0, 4)
+    ]
+
+    let validItems = rawItems.compactMap { name, price, quantity in
+        try? makeOrderItem(name: name, price: price, quantity: quantity)
+    }
+
+    let total = validItems.reduce(0.0) { partialResult, item in
+        partialResult + item.price * Double(item.quantity)
+    }
+
+    print("[exercise8] validItems = \(validItems)")
+    print("[exercise8] total = \(total)")
 }
