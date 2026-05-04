@@ -46,12 +46,17 @@ final class AppSimulator {
     }
 
     private func configureRoutes() {
-        listViewController.setOnSelectArticle { [weak self] article in
-            self?.openDetail(article: article)
+        listViewController.setOnSelectArticle { [weak self] articleID in
+            self?.openDetail(articleID: articleID)
         }
     }
 
-    private func openDetail(article: Article) {
+    private func openDetail(articleID: Int) {
+        guard let article = store.article(id: articleID) else {
+            print("AppSimulator: 没有找到 id 为 \(articleID) 的文章，无法打开详情页")
+            return
+        }
+
         print("AppSimulator: 打开文章详情页：\(article.title)")
 
         let detailViewController = ArticleDetailViewController(

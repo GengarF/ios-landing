@@ -7,12 +7,12 @@ final class ArticleRepository {
         self.apiService = apiService
     }
 
-    func loadHomeArticles(completion: @escaping ([Article]) -> Void) {
+    func loadHomeArticles(completion: @escaping (Result<[Article], Error>) -> Void) {
         print("Repository: 准备加载首页文章数据")
 
         apiService.fetchArticles { articles in
             print("Repository: 收到 APIService 返回的数据，准备交给上层")
-            completion(articles)
+            completion(.success(articles))
         }
     }
 }

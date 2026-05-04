@@ -4,14 +4,14 @@ final class ArticleListViewController {
     private let repository: ArticleRepository
     private let store: ArticleStore
 
-    private var onSelectArticle: ((Article) -> Void)?
+    private var onSelectArticle: ((Int) -> Void)?
 
     init(repository: ArticleRepository, store: ArticleStore) {
         self.repository = repository
         self.store = store
     }
 
-    func setOnSelectArticle(_ handler: @escaping (Article) -> Void) {
+    func setOnSelectArticle(_ handler: @escaping (Int) -> Void) {
         self.onSelectArticle = handler
     }
 
@@ -20,15 +20,21 @@ final class ArticleListViewController {
         print("ListViewController: viewDidLoad，列表页开始加载")
         print("")
 
-        repository.loadHomeArticles { [weak self] articles in
+        repository.loadHomeArticles { [weak self] result in
             MainThreadSimulator.run {
                 guard let self else {
                     completion()
                     return
                 }
 
-                self.store.replaceArticles(articles)
-                self.render()
+                switch result {
+                case .success(let articles):
+                    self.store.replaceArticles(articles)
+                    self.render()
+                case .failure(let error):
+                    print("ListViewController: 加载文章失败：\(error.localizedDescription)")
+                }
+
                 completion()
             }
         }
@@ -59,7 +65,7 @@ final class ArticleListViewController {
             return
         }
 
-        onSelectArticle?(article)
+        onSelectArticle?(article.id)
     }
 }
 
@@ -77,13 +83,13 @@ viewDidLoad
 
 还有一个点：
 
-private var onSelectArticle: ((Article) -> Void)?
+private var onSelectArticle: ((Int) -> Void)?
 
 这表示列表页不知道“点击后具体怎么跳转”。
 
 它只暴露一个点击事件：
 
-onSelectArticle?(article)
+onSelectArticle?(article.id)
 
 真正打开详情页的逻辑，放到 AppSimulator 里统一协调。
 
